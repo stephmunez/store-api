@@ -1,4 +1,5 @@
 const getAllProductsStatic = async (req, res) => {
+  throw new Error('testing async errors');
   res.send({ msg: 'products testing route' });
 };
 
