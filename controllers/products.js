@@ -1,10 +1,15 @@
+const Product = require('../models/product');
+
 const getAllProductsStatic = async (req, res) => {
-  throw new Error('testing async errors');
-  res.send({ msg: 'products testing route' });
+  const products = await Product.find({
+    featured: true,
+  });
+  res.send({ products, length: products.length });
 };
 
 const getAllProducts = async (req, res) => {
-  res.send({ msg: 'products route' });
+  const products = await Product.find(req.query);
+  res.send({ products, length: products.length });
 };
 
 module.exports = { getAllProductsStatic, getAllProducts };
