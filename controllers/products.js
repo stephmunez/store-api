@@ -9,7 +9,9 @@ const getAllProductsStatic = async (req, res) => {
 };
 
 const getAllProducts = async (req, res) => {
-  let { featured, company, name, sort, fields, page, limit } = req.query;
+  // query
+  let { featured, company, name, sort, fields, page, limit, numericFilters } =
+    req.query;
   const queryObject = {};
 
   if (featured) {
@@ -24,8 +26,37 @@ const getAllProducts = async (req, res) => {
     queryObject.name = { $regex: name, $options: 'i' };
   }
 
+  if (numericFilters) {
+    const operatorMap = {
+      '>': '$gt',
+      '>=': '$gte',
+      '=': '$eq',
+      '<': '$lt',
+      '<=': '$lte',
+    };
+
+    const options = ['price', 'rating'];
+    const regEx = /\b(>|>=|=|<|<=)\b/g;
+    let filters = numericFilters.replace(
+      regEx,
+      (match) => `-${operatorMap[match]}-`
+    );
+
+    filters.split(',').forEach((item) => {
+      const [field, operator, value] = item.split('-');
+
+      if (options.includes(field)) {
+        queryObject[field] = {
+          [operator]: Number(value),
+        };
+      }
+    });
+  }
+
+  console.log(queryObject);
   let result = Product.find(queryObject);
 
+  // sort and select
   if (sort) {
     const sortList = sort.split(',').join(' ');
     result = result.sort(sortList);
@@ -38,6 +69,7 @@ const getAllProducts = async (req, res) => {
     result = result.select(fieldsList);
   }
 
+  // skip and limit
   const { skip, limit: finalLimit } = getPagination(page, limit);
 
   result = result.skip(skip).limit(finalLimit);
